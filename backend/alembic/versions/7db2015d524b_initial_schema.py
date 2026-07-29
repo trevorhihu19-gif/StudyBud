@@ -178,6 +178,7 @@ def downgrade() -> None:
     op.drop_table('quiz_attempt_answers')
     op.drop_index('ix_quiz_questions_quiz', table_name='quiz_questions')
     op.drop_table('quiz_questions')
+    sa.Enum(name='questiontype').drop(op.get_bind(), checkfirst=True)
     op.drop_index('ix_attempts_user_completed', table_name='quiz_attempts')
     op.drop_table('quiz_attempts')
     op.drop_index('ix_chat_messages_session_created', table_name='chat_messages')
@@ -198,5 +199,6 @@ def downgrade() -> None:
     op.drop_index('ix_documents_user_status', table_name='documents')
     op.drop_index('ix_documents_user_created', table_name='documents')
     op.drop_table('documents')
+    sa.Enum(name='documentstatus').drop(op.get_bind(), checkfirst=True)
     op.drop_table('users')
     # ### end Alembic commands ###
