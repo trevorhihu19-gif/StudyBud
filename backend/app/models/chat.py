@@ -17,7 +17,7 @@ class ChatSession(Base):
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
-    document_id: Mapped[uuid.UUID] = mapped_column(
+    document_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("documents.id", ondelete="SET NULL"), nullable=False
     )
     title: Mapped[str] = mapped_column(String(500), default="New chat")

@@ -74,7 +74,7 @@ def upgrade() -> None:
     op.create_table('chat_sessions',
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('user_id', sa.UUID(), nullable=False),
-    sa.Column('document_id', sa.UUID(), nullable=False),
+    sa.Column('document_id', sa.UUID(), nullable=True),
     sa.Column('title', sa.String(length=500), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['document_id'], ['documents.id'], ondelete='SET NULL'),
