@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     posthog_api_key: str
     posthog_host: str = "https://us.i.posthog.com"
 
+    storage_dir: str = "./storage"
+    max_upload_size_mb: int = 20
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
 settings = Settings()
