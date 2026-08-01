@@ -14,6 +14,7 @@ env/
 .env.*.local
 *.pem
 *.env
+*.env.example
 # React / Frontend
 node_modules/
 dist/

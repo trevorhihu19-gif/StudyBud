@@ -13,6 +13,7 @@ from app.core.logging import configure_logging, get_logger, new_request_id
 from app.api.deps import get_current_user
 from app.core.rate_limit import rate_limit
 from app.core.security_middleware import shield_middleware
+from app.routes.documents import router as documents_router
 
 configure_logging()
 logger = get_logger(__name__)
@@ -60,6 +61,8 @@ async def whoami(user: User = Depends(get_current_user), _: None = Depends(rate_
 async def health_check_db(db: AsyncSession = Depends(get_db)):
     result = await db.execute(text("SELECT 1"))
     return {"status": "ok", "db_result": result.scalar()}
+
+app.include_router(documents_router)
 
 @app.post("/quizzes/generate")
 async def generate_quiz(

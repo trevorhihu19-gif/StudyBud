@@ -2,6 +2,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import IntegrityError
 
 from app.core.logging import get_logger
 from app.core.security import verify_clerk_token
@@ -31,8 +32,13 @@ async def get_current_user(
             name=claims.get("name")
         )
         db.add(user)
-        await db.commit()
-        await db.refresh(user)
-        logger.info("user_provisioned", user_id=str(user.id), clerk_id=clerk_id)
+        try:
+            await db.commit()
+            await db.refresh(user)
+            logger.info("user_provisioned", user_id=str(user.id), clerk_id=clerk_id)
+        except IntegrityError:
+            await db.rollback()
+            result = await db.execute(select(User).where(User.clerk_id == clerk_id))
+            user = result.scalar_one()
 
     return user
