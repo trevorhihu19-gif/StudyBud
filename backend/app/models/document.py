@@ -59,7 +59,7 @@ class DocumentChunk(Base):
     page_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     token_count: Mapped[int] = mapped_column(Integer, nullable=False)
-    embedding: Mapped[list[float]] = mapped_column(Vector(1536), nullable=True)
+    embedding: Mapped[list[float]] = mapped_column(Vector(384), nullable=True)
     content_tsv = mapped_column(TSVECTOR, nullable=True)  
     document: Mapped["Document"] = relationship(back_populates="chunks")
 

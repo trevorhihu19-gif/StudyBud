@@ -16,3 +16,13 @@ posthog==7.0.0
 filetype==1.2.0
 python-multipart==0.0.12
 aiofiles==24.1.0
+docx2txt==0.9
+llama-index-core==0.14.25
+llama-index-readers-file==0.7.0
+pypdf==6.21.2
+llama-index-core==0.14.25
+llama-index-readers-file==0.7.0
+docx2txt==0.9
+llama-index-embeddings-huggingface==0.8.0
+sentence-transformers==6.2.0
+tiktoken==0.14.0
