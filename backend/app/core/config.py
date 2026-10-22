@@ -13,8 +13,8 @@ class Settings(BaseSettings):
 
     arcjet_key: str
 
-    sentry_dsn: str
-    posthog_api_key: str
+    sentry_dsn: str = ""
+    posthog_api_key: str = ""
     posthog_host: str = "https://us.i.posthog.com"
 
     storage_dir: str = "./storage"
