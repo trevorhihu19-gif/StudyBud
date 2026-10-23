@@ -47,13 +47,14 @@ async def process_document(document_id: UUID) -> None:
                         embedding=chunk["embedding"],
                     )
                 )
-                document.status = DocumentStatus.READY
-                document.page_count = max((c["page_number"] or 0 for c in chunks), default=None)
-                await db.commit()
-                
-                logger.info(
-                    "document_processed" , document_id=str(document.id), chunk_count=len(chunks)
-                )
+
+            document.status = DocumentStatus.READY
+            document.page_count = max((c["page_number"] or 0 for c in chunks), default=None)
+            await db.commit()
+
+            logger.info(
+                "document_processed", document_id=str(document.id), chunk_count=len(chunks)
+            )
                 
         except ExtractionError as e:
             document.status = DocumentStatus.FAILED
