@@ -19,6 +19,9 @@ class Settings(BaseSettings):
 
     storage_dir: str = "./storage"
     max_upload_size_mb: int = 20
+    
+    daily_user_token_limit: int = 20_000
+    daily_global_token_limit: int = 160_000
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
