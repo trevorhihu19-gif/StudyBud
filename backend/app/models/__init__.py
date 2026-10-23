@@ -12,6 +12,7 @@ from app.models.user import User
 from app.models.chat import ChatMessage, ChatSession
 from app.models.flashcard import Flashcard
 from app.models.study_session import StudySession
+from app.models.usage import UsageCounter
 
 __all__ = [
     "Base",
@@ -29,5 +30,7 @@ __all__ = [
     "StudySession",
     "Summary",
     "Topic",
+    "UsageCounter",
     "User",
+    
 ]

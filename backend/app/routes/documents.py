@@ -1,5 +1,5 @@
 import uuid
-from fastapi import APIRouter, Depends, UploadFile
+from fastapi import APIRouter, Depends, UploadFile, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user
@@ -11,6 +11,7 @@ from app.core.database import get_db
 from app.models import Document, DocumentStatus, User
 from app.schemas.document import DocumentResponse
 from app.services.storage import save_document_file
+from app.services.document_processor import process_document
 
 router = APIRouter(prefix="/documents", tags=["documents"])
 logger = get_logger(__name__)
@@ -18,6 +19,7 @@ logger = get_logger(__name__)
 @router.post("/upload", response_model=DocumentResponse)
 async def upload_document(
     file: UploadFile,
+    background_tasks: BackgroundTasks,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
     _:None = Depends(rate_limit)
@@ -39,6 +41,8 @@ async def upload_document(
     db.add(document)
     await db.commit()
     await db.refresh(document)
+    
+    background_tasks.add_task(process_document, document.id)
 
     logger.info("document_uploaded", user_id=str(user.id), document_id=str(document.id), file_type=extension)
     track("document_uploaded", user_id=str(user.id), properties={"file_type": extension})

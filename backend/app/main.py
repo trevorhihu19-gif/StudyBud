@@ -14,11 +14,18 @@ from app.api.deps import get_current_user
 from app.core.rate_limit import rate_limit
 from app.core.security_middleware import shield_middleware
 from app.routes.documents import router as documents_router
+from app.routes.search import router as search_router
+from app.services.quota import QuotaExceeded
 
 configure_logging()
 logger = get_logger(__name__)
 
 app = FastAPI(title="StudyBud", version="0.1.0")
+
+_QUOTA_MESSAGES = {
+    "user": "You've reached your daily AI limit. It resets at midnight UTC.",
+    "global": "StudyBud's free daily AI capacity has been used up. Please try again after it resets at midnight UTC.",
+}
 
 @app.middleware("http")
 async def add_request_id_middleware(request: Request, call_next):
@@ -49,6 +56,18 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
     logger.error("unhandled_exception", path=request.url.path, error=str(exc), exc_info=True)
     return JSONResponse(status_code=500, content={"error": "Internal server error"})
 
+@app.exception_handler(QuotaExceeded)
+async def quota_exceeded_handler(request: Request, exc: QuotaExceeded):
+    return JSONResponse(
+        status_code=429,
+        content={
+            "error":_QUOTA_MESSAGES[exc.scope],
+            "code": f"{exc.scope}_daily_limit",
+            "resets_at": exc.resets_at.isoformat(),
+        },
+        headers={"Retry-After": str(exc.retry_after)}
+    )
+
 @app.get("/health")
 async def health_check():
     return {"status": "ok", "environment": settings.environment}
@@ -63,6 +82,7 @@ async def health_check_db(db: AsyncSession = Depends(get_db)):
     return {"status": "ok", "db_result": result.scalar()}
 
 app.include_router(documents_router)
+app.include_router(search_router)
 
 @app.post("/quizzes/generate")
 async def generate_quiz(
