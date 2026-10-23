@@ -1,0 +1,8 @@
+{
+    "ruff.lint.ignore": [
+        "I001",
+        "B008",
+        "UP037"
+    ],
+    "python-envs.defaultEnvManager": "ms-python.python:system"
+}
