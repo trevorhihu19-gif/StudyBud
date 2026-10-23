@@ -64,6 +64,7 @@ async def process_document(document_id: UUID) -> None:
             logger.warning("document_processing_failed", document_id=str(document.id), reason=str(e))
             
         except Exception as e:
+            await db.rollback()
             document.status = DocumentStatus.FAILED
             document.error_message = "Processing failed unexpectedly"
             await db.commit()
