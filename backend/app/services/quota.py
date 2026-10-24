@@ -18,7 +18,7 @@ class QuotaExceeded(Exception):
     def __init__(self, scope: Literal["user", "global"], resets_at: datetime):
         self.scope = scope
         self.resets_at = resets_at
-        self.retry_after = max(int(resets_at - datetime.now(UTC)).total_seconds())
+        self.retry_after = max(int((resets_at - datetime.now(UTC)).total_seconds()), 0)
 
 def _utc_today() -> date:
     return datetime.now(UTC).date()
