@@ -1,9 +1,7 @@
-import re
+from app.core.sanitize import clean_text
 import uuid
 
 from pydantic import BaseModel, Field, field_validator
-
-_CONTROL_CHARS = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 
 class SearchRequest(BaseModel):
     query: str = Field(min_length=1, max_length=500)
@@ -13,10 +11,7 @@ class SearchRequest(BaseModel):
     @field_validator("query")
     @classmethod
     def clean_query(cls, v: str) -> str:
-        v = _CONTROL_CHARS.sub("", v).strip()
-        if not v:
-            raise ValueError("Query cannot be empty")
-        return v
+        return clean_text(v)
 
 class ChunkResult(BaseModel):
     chunk_id: uuid.UUID
