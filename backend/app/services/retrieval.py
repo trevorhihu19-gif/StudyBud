@@ -85,9 +85,9 @@ async def retrieve(
     await db.execute(text("SET LOCAL hnsw.iterative_scan = 'relaxed_order'"))
     await db.execute(text("SET LOCAL hnsw.ef_search = 100"))
 
-    sql = _SQL.format(doc_filter=_DOC_FILTER if document_ids else "")
+    sql = _SQL.format(doc_filter=_DOC_FILTER if document_ids is not None else "")
     stmt = text(sql)
-    if document_ids:
+    if document_ids is not None:
         stmt = stmt.bindparams(bindparam("document_ids", type_=ARRAY(UUID(as_uuid=True))))
 
     params = {
@@ -98,7 +98,7 @@ async def retrieve(
         "rrf_k": RRF_K,
         "limit": limit,
     }
-    if document_ids:
+    if document_ids is not None:
         params["document_ids"] = document_ids
 
     rows = (await db.execute(stmt, params)).all()

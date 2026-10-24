@@ -1,6 +1,6 @@
 import uuid
 from dataclasses import dataclass
-from datetime import date, datetime, time, timedelta
+from datetime import UTC, date, datetime, time, timedelta
 from contextlib import asynccontextmanager
 from typing import Literal
 
@@ -18,13 +18,13 @@ class QuotaExceeded(Exception):
     def __init__(self, scope: Literal["user", "global"], resets_at: datetime):
         self.scope = scope
         self.resets_at = resets_at
-        self.retry_after = max(int(resets_at - datetime.now(datetime.UTC)).total_seconds())
+        self.retry_after = max(int(resets_at - datetime.now(UTC)).total_seconds())
 
 def _utc_today() -> date:
-    return datetime.now(datetime.UTC).date()
+    return datetime.now(UTC).date()
 
 def _next_reset(day: date) -> datetime:
-    return datetime.combine(day + timedelta(days=1), time.min, tzinfo=datetime.UTC)
+    return datetime.combine(day + timedelta(days=1), time.min, tzinfo=UTC)
 
 _INCREMENT_SQL = text("""
     INSERT INTO usage_counters (id, user_id, day, resource, used)

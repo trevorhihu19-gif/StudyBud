@@ -22,6 +22,12 @@ class Settings(BaseSettings):
     
     daily_user_token_limit: int = 20_000
     daily_global_token_limit: int = 160_000
+    
+    groq_api_key: str
+    groq_model: str = "openai/gpt-oss-120b"
+    langsmith_tracing: bool = True
+    langsmith_api_key: str | None = None
+    langsmith_project: str = "studybud-dev"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 

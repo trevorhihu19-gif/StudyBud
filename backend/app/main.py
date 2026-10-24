@@ -15,10 +15,16 @@ from app.core.rate_limit import rate_limit
 from app.core.security_middleware import shield_middleware
 from app.routes.documents import router as documents_router
 from app.routes.search import router as search_router
+from app.routes.chat import router as chat_router
 from app.services.quota import QuotaExceeded
+from app.agents.llm import LLMUnavailable
+from app.core.tracing import configure_tracing
 
 configure_logging()
+configure_tracing()
 logger = get_logger(__name__)
+
+
 
 app = FastAPI(title="StudyBud", version="0.1.0")
 
@@ -53,7 +59,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception):
-    logger.error("unhandled_exception", path=request.url.path, error=str(exc), exc_info=True)
+    logger.error("unhandled_exception", path=request.url.path, error=str(exc))
     return JSONResponse(status_code=500, content={"error": "Internal server error"})
 
 @app.exception_handler(QuotaExceeded)
@@ -66,6 +72,15 @@ async def quota_exceeded_handler(request: Request, exc: QuotaExceeded):
             "resets_at": exc.resets_at.isoformat(),
         },
         headers={"Retry-After": str(exc.retry_after)}
+    )
+
+@app.exception_handler(LLMUnavailable)
+async def llm_unavailable_handler(request: Request, exc: LLMUnavailable):
+    logger.warning("llm_unavailable", path=request.url.path)
+    return JSONResponse(
+        status_code=503,
+        content={"error": "The AI is busy right now. Please try again later.", "code": "llm_busy"},
+        headers={"Retry-After": "30"},
     )
 
 @app.get("/health")
@@ -83,6 +98,7 @@ async def health_check_db(db: AsyncSession = Depends(get_db)):
 
 app.include_router(documents_router)
 app.include_router(search_router)
+app.include_router(chat_router)
 
 @app.post("/quizzes/generate")
 async def generate_quiz(

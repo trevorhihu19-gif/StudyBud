@@ -1,3 +1,4 @@
+import asyncio
 from pathlib import Path
 from uuid import UUID
 
@@ -32,8 +33,8 @@ async def process_document(document_id: UUID) -> None:
         
         try:
             file_path = Path(settings.storage_dir) / document.storage_url
-            pages = extract_pages(file_path, document.file_type)
-            chunks = chunk_documents(pages)
+            pages = await asyncio.to_thread(extract_pages, file_path, document.file_type)
+            chunks = await asyncio.to_thread(chunk_documents, pages)
             chunks = await embed_chunks(chunks)
             
             for chunk in chunks:
