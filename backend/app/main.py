@@ -16,6 +16,7 @@ from app.core.security_middleware import shield_middleware
 from app.routes.documents import router as documents_router
 from app.routes.search import router as search_router
 from app.routes.chat import router as chat_router
+from app.routes.summaries import router as summaries_router
 from app.services.quota import QuotaExceeded
 from app.agents.llm import LLMUnavailable
 from app.core.tracing import configure_tracing
@@ -59,7 +60,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception):
-    logger.error("unhandled_exception", path=request.url.path, error=str(exc))
+    logger.error("unhandled_exception", path=request.url.path, error=str(exc), exc_info=True)
     return JSONResponse(status_code=500, content={"error": "Internal server error"})
 
 @app.exception_handler(QuotaExceeded)
@@ -99,6 +100,7 @@ async def health_check_db(db: AsyncSession = Depends(get_db)):
 app.include_router(documents_router)
 app.include_router(search_router)
 app.include_router(chat_router)
+app.include_router(summaries_router)
 
 @app.post("/quizzes/generate")
 async def generate_quiz(

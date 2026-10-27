@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 from datetime import datetime
 from enum import Enum as PyEnum
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import DateTime, Enum, ForeignKey, Index, Integer, String, Text, func
+from sqlalchemy import CheckConstraint, DateTime, Enum, ForeignKey, Index, Integer, String, Text, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import JSONB, TSVECTOR, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import Base, gen_uuid
@@ -76,10 +76,21 @@ class Summary(Base):
     document_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("documents.id", ondelete="CASCADE"), nullable=False
     )
-    key_points: Mapped[list] = mapped_column(JSONB, nullable=False)
-    full_summary: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, server_default="processing")
+    key_points: Mapped[list | None] = mapped_column(JSONB, nullable=True)
+    full_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+    chunks_used: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    chunks_total: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    error_messages: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+    
     document: Mapped["Document"] = relationship(back_populates="summaries")
-
-    __table_args__ = (Index("ix_summaries_document", "document_id"),)
+    
+    __table_args__ = (
+        # One summary per document
+        UniqueConstraint("document_id", name="uq_summaries_document"),
+        CheckConstraint("status IN ('processing', 'ready', 'failed')", name="ck_summaries_status"),
+    )
