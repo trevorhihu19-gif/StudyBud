@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from functools import partial
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -56,7 +56,7 @@ async def chat(
     await db.commit()
     
       #2. Run the agent --
-    asked_at = datetime.now(datetime.UTC)
+    asked_at = datetime.now(UTC)
     result = await qa_graph.ainvoke(
         {"question": body.message, "history": history},
         context=QAContext(user_id=user.id, document_ids=[document_id] if document_id else None),
@@ -65,7 +65,7 @@ async def chat(
             "metadata": {"user_id": str(user.id), "request_id": request_id_var.get()},  # ids only, never email
         },
     )
-    answered_at = max(datetime.now(datetime.UTC), asked_at + timedelta(milliseconds=1))
+    answered_at = max(datetime.now(UTC), asked_at + timedelta(milliseconds=1))
 
     #3. Write phase: only reached if the agent succeeded --
     if is_new:
