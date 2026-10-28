@@ -26,7 +26,7 @@ def _to_response(s: Summary) -> SummaryResponse:
         key_points=s.key_points or [],
         chunks_used=s.chunks_used,
         chunks_total=s.chunks_total,
-        error=s.error_message,
+        error=s.error_messages,
         created_at=s.created_at,
     )
     
@@ -69,7 +69,7 @@ async def create_summary(
         raise HTTPException(status_code=422, detail="This document could not be processed")
     
     existing = await _load_summary(db, document_id)
-    if existing is None and existing.status == "ready":
+    if existing is not None and existing.status == "ready":
         return _to_response(existing) # idempotent: zero tokens spent
     await db.commit()  # release the pooled connection before the slow LLM call
     
@@ -100,7 +100,11 @@ async def create_summary(
         raise
     
     summary = await save_ready(
-        claim_id, result["overview"], result["key_points"], len(result["chunks"])
+        claim_id,
+        result["overview"],
+        result["key_points"],
+        len(result["chunks"]),
+        result["chunks_total"],
     )
     
     logger.info(

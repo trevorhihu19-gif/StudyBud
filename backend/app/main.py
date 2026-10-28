@@ -17,6 +17,8 @@ from app.routes.documents import router as documents_router
 from app.routes.search import router as search_router
 from app.routes.chat import router as chat_router
 from app.routes.summaries import router as summaries_router
+from app.routes.quizzes import attempts_router, router as quizzes_router
+from app.routes.topics import router as topics_router
 from app.services.quota import QuotaExceeded
 from app.agents.llm import LLMUnavailable
 from app.core.tracing import configure_tracing
@@ -101,6 +103,9 @@ app.include_router(documents_router)
 app.include_router(search_router)
 app.include_router(chat_router)
 app.include_router(summaries_router)
+app.include_router(quizzes_router)
+app.include_router(attempts_router)
+app.include_router(topics_router)
 
 @app.post("/quizzes/generate")
 async def generate_quiz(

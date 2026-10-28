@@ -5,14 +5,12 @@ from uuid import UUID
 from langgraph.graph import END, START, StateGraph
 from langgraph.runtime import Runtime
 from pydantic import BaseModel, Field
-from sqlalchemy import select
 
 from app.agents.llm import SUMMARY_MAX_OUTPUT_TOKENS, call_llm_structured, estimate_tokens
 from app.agents.prompts import build_summary_messages, strip_unsafe_markup
 from app.core.logging import get_logger
-from app.core.database import AsyncSessionLocal
-from app.models import Document, DocumentChunk
 from app.services.chunk_selection import select_representative
+from app.services.chunk_loader import load_owned_chunks
 from app.services.quota import llm_quota
 
 logger = get_logger(__name__)
@@ -49,37 +47,24 @@ def _clean(text: str, limit: int) -> str:
     return strip_unsafe_markup(text).strip()[:limit]
 
 async def select_node(state: SummaryState, runtime: Runtime[SummaryContext]) -> dict:
-    # Re-checks ownership itself: this node never trusts the caller
-    async with AsyncSessionLocal() as db, db.begin():
-        rows = await db.execute(
-            select(DocumentChunk)
-            .join(Document, Document.id == DocumentChunk.document_id)
-            .where(
-                DocumentChunk.document_id == UUID(state["document_id"]),
-                Document.user_id == runtime.context.user_id,
-            )
-            .order_by(DocumentChunk.chunk_index)
-        )
-        all_chunks = [
-            {
-                "chunk_id": str(c.id),
-                "chunk_index": c.chunk_index,
-                "page_number": c.page_number,
-                "content": c.content,
-                "token_count": c.token_count,
-                "embedding": c.embedding,
-            }
-            for c in rows.scalars()
-        ]
-    
+    """Pick the document sections that best represent the whole document.
+
+    Loads the user's chunks (ownership is re-checked inside the loader), then
+    keeps a varied, central subset that fits the token budget. No AI call here.
+
+    Returns:
+        State update with the chosen "chunks" and the document's "chunks_total".
+    """
+    all_chunks = await load_owned_chunks(runtime.context.user_id, UUID(state["document_id"]))
+
     usable = [c for c in all_chunks if c["embedding"] is not None]
     if not usable:
         raise SummaryGenerationError("This document has no readable content to summarize")
-    
+
     selected = select_representative(usable, CONTENT_BUDGET_TOKENS)
     for c in selected:
-        c.pop("embedding")
-        
+        c.pop("embedding")  # big and not needed later; keeps graph state and traces small
+
     logger.info("chunks_selected", used=len(selected), total=len(all_chunks))
     return {"chunks": selected, "chunks_total": len(all_chunks)}
 
@@ -95,7 +80,7 @@ async def summarize_node(state: SummaryState, runtime: Runtime[SummaryContext]):
             await quota.settle(total_tokens)
             
         if parsed is None:
-            raise SummaryGenerationError["The model returned an unusable summary. Please try again."]
+            raise SummaryGenerationError("The model returned an unusable summary. Please try again.")
         
         points = []
         for kp in parsed.key_points[:MAX_KEY_POINTS]:

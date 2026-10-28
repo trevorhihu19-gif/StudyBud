@@ -13,7 +13,7 @@ class KeyPointOut(BaseModel):
     chunk_id: uuid.UUID | None
     
 class SummaryResponse(BaseModel):
-    doument_id: uuid.UUID
+    document_id: uuid.UUID
     status: Literal["processing", "ready", "failed"]
     overview: str | None
     key_points: list[KeyPointOut]
