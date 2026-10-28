@@ -12,6 +12,8 @@ from sqlalchemy import (
     Index,
     String,
     Text,
+    Integer,
+    UniqueConstraint,
     func,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
@@ -65,6 +67,10 @@ class QuizQuestion(Base):
     source_chunk_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("document_chunks.id", ondelete="SET NULL"), nullable=True
     )
+    topic_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("topics.id", ondelete="SET NULL"), nullable=True
+    )
+    position: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")  # display order
 
     quiz: Mapped["Quiz"] = relationship(back_populates="questions")
 
@@ -113,5 +119,7 @@ class QuizAttemptAnswer(Base):
 
     __table_args__ = (
         Index("ix_answers_topic_correct", "topic_id", "is_correct"),
+        # One answer per question per attempt: this is what "locks" an answer once submitted
+        UniqueConstraint("attempt_id", "question_id", name="uq_attempt_question")
     )
 

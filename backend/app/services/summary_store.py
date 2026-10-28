@@ -11,7 +11,7 @@ _CLAIM_SQL = text("""
     INSERT INTO summaries (id, document_id, status)
     VALUES (:id, :document_id, 'processing')
     ON CONFLICT ON CONSTRAINT uq_summaries_document
-    DO UPDATE SET status = 'processing', error_message = NULL, updated_at = now()
+    DO UPDATE SET status = 'processing', error_messages = NULL, updated_at = now()
     WHERE summaries.status = 'failed'
        OR (summaries.status = 'processing' AND summaries.updated_at < now() - interval '5 minutes')
     RETURNING id
@@ -39,5 +39,5 @@ async def save_ready(
         summary.key_points = key_points
         summary.chunks_used = chunks_used
         summary.chunks_total = chunks_total
-        summary.error_message = None
+        summary.error_messages = None
     return summary
