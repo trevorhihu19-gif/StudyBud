@@ -47,7 +47,7 @@ class AnswerFeedback(BaseModel):
     """Instant feedback for one answered question."""
     
     question_id: uuid.UUID
-    is_correct: str | None
+    is_correct: bool
     correct_answer: str
     explanation: str | None
 
