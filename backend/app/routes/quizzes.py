@@ -85,7 +85,7 @@ async def generate_quiz(
     The response contains questions and options only, never the answers.
     """
     
-    found = await db.execute(select(Document).where(Document.id == body.document_id, Document.user-id == user.id))
+    found = await db.execute(select(Document).where(Document.id == body.document_id, Document.user_id == user.id))
     document = found.scalar_one_or_none()
     if document is None:
         raise HTTPException(status_code=404, detail="Document not found")
