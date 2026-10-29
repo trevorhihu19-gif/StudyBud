@@ -1,6 +1,5 @@
 """LangGraph workflow that writes a quiz from a document: select chunks, then generate."""
 
-import random
 from dataclasses import dataclass
 from typing import Literal, TypedDict
 from uuid import UUID
@@ -12,8 +11,7 @@ from pydantic import BaseModel, Field
 from app.agents.llm import call_llm_structured, estimate_tokens
 from app.agents.prompts import build_quiz_messages
 from app.core.logging import get_logger
-from app.services.chunk_loader import load_owned_chunks
-from app.services.chunk_selection import select_representative
+from app.services.chunk_loader import load_study_sample
 from app.services.quiz_builder import build_valid_questions
 from app.services.quota import llm_quota
 
@@ -67,25 +65,18 @@ class QuizContext:
 async def select_node(state: QuizState, runtime: Runtime[QuizContext]) -> dict:
     """Choose which parts of the document the quiz will be based on.
 
-    Takes a random 70% of the chunks (so repeat quizzes differ), then picks a
+    Uses a random 70% of the document so repeat quizzes differ, then picks a
     varied, representative set that fits the token budget. No AI call here.
 
     Returns:
         State update with the chosen "chunks".
     """
-    all_chunks = await load_owned_chunks(runtime.context.user_id, UUID(state["document_id"]))
-    usable = [c for c in all_chunks if c["embedding"] is not None]
-    if not usable:
+    chunks = await load_study_sample(
+        runtime.context.user_id, UUID(state["document_id"]), CONTENT_BUDGET_TOKENS, SAMPLE_FRACTION
+    )
+    if not chunks:
         raise QuizGenerationError("This document has no readable content to build a quiz from")
-
-    if len(usable) > 10:
-        usable = random.sample(usable, int(len(usable) * SAMPLE_FRACTION))
-
-    selected = select_representative(usable, CONTENT_BUDGET_TOKENS)
-    for c in selected:
-        c.pop("embedding")
-    return {"chunks": selected}
-
+    return {"chunks": chunks}
 
 async def generate_node(state: QuizState, runtime: Runtime[QuizContext]) -> dict:
     """Ask the model for questions, then validate every one of them in code.

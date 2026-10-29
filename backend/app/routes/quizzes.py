@@ -1,7 +1,7 @@
 """Quiz endpoints: generate a quiz, take it question by question, and get the score."""
 
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from functools import partial
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -220,7 +220,7 @@ async def complete_attempt(
         claimed = await db.execute(
             update(QuizAttempt)
             .where(QuizAttempt.id == attempt.id, QuizAttempt.completed_at.is_(None))
-            .values(completed_at=datetime.now(datetime.UTC), score_percent=score)
+            .values(completed_at=datetime.now(UTC), score_percent=score)
             .returning(QuizAttempt.id)
         )
         if claimed.scalar_one_or_none() is not None:
