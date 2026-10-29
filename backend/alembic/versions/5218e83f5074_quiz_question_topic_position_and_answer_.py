@@ -23,7 +23,7 @@ def upgrade() -> None:
     op.create_unique_constraint('uq_attempt_question', 'quiz_attempt_answers', ['attempt_id', 'question_id'])
     op.add_column('quiz_questions', sa.Column('topic_id', sa.UUID(), nullable=True))
     op.add_column('quiz_questions', sa.Column('position', sa.Integer(), server_default='0', nullable=False))
-    op.create_foreign_key(None, 'quiz_questions', 'topics', ['topic_id'], ['id'], ondelete='SET NULL')
+    op.create_foreign_key('fk_quiz_questions_topic_id_topics', 'quiz_questions', 'topics', ['topic_id'], ['id'], ondelete='SET NULL')
     # ### end Alembic commands ###
 
 
@@ -32,5 +32,5 @@ def downgrade() -> None:
     op.drop_constraint(None, 'quiz_questions', type_='foreignkey')
     op.drop_column('quiz_questions', 'position')
     op.drop_column('quiz_questions', 'topic_id')
-    op.drop_constraint('uq_attempt_question', 'quiz_attempt_answers', type_='unique')
+    op.drop_constraint('fk_quiz_questions_topic_id_topics', 'quiz_questions', type_='foreignkey')
     # ### end Alembic commands ###
