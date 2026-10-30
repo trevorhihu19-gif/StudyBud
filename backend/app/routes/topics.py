@@ -8,6 +8,7 @@ from app.api.deps import get_current_user
 from app.core.rate_limit import rate_limit
 from app.core.database import get_db
 from app.models import User
+from app.services.analytics import get_weak_topics
 from app.schemas.quiz import WeakTopicOut
 
 router = APIRouter(prefix="/topics", tags=["topics"])
@@ -40,6 +41,8 @@ async def weak_topics(
         {"user_id": user.id, "limit": limit},
     )
     return [
-        WeakTopicOut(topic_id=r.id, name=r.name, mastery_score=round(r.mastery_score, 1), answered_count=r.answered)
-        for r in rows
-    ]
+        WeakTopicOut(**t) for t in await get_weak_topics(db, user.id, limit)
+        for t in rows
+        ]
+        
+    

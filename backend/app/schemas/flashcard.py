@@ -27,7 +27,7 @@ class GenerateResult(BaseModel):
     """Result of generation, the new cards and how many were skipped as duplicates."""
     
     created: list[FlashcardOut]
-    skipped_duplicate: int
+    skipped_duplicates: int
     
 class ReviewRequest(BaseModel):
     """The student's self-rating.Nothing else is accepted, the server owns the schedule."""

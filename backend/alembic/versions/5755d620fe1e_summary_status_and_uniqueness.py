@@ -29,9 +29,18 @@ def upgrade() -> None:
             nullable=False
         )
     )
-    op.add_column('summaries', sa.Column('chunks_used', sa.Integer(), nullable=True))
-    op.add_column('summaries', sa.Column('chunks_total', sa.Integer(), nullable=True))
-    op.add_column('summaries', sa.Column('error_messages', sa.Text(), nullable=True))
+    op.add_column(
+        'summaries',
+        sa.Column('chunks_used', sa.Integer(), nullable=True)
+    )
+    op.add_column(
+        'summaries',
+        sa.Column('chunks_total', sa.Integer(), nullable=True)
+    )
+    op.add_column(
+        'summaries',
+        sa.Column('error_messages', sa.Text(), nullable=True)
+    )
     op.add_column(
         'summaries',
         sa.Column(
@@ -53,7 +62,10 @@ def upgrade() -> None:
         existing_type=sa.TEXT(),
         nullable=True
     )
-    op.drop_index('ix_summaries_document', table_name='summaries')
+    op.drop_index(
+        'ix_summaries_document',
+        table_name='summaries'
+    )
     op.create_unique_constraint(
         'uq_summaries_document',
         'summaries',
@@ -67,18 +79,27 @@ def upgrade() -> None:
     # ### end Alembic commands ###
 
 
-
 def downgrade() -> None:
-    # Remove incomplete rows before restoring NOT NULL constraints.
-    op.execute(
+    # Refuse to downgrade if doing so would require losing summary content.
+    connection = op.get_bind()
+
+    incomplete_count = connection.execute(
         sa.text(
             """
-            DELETE FROM summaries
+            SELECT COUNT(*)
+            FROM summaries
             WHERE full_summary IS NULL
                OR key_points IS NULL
             """
         )
-    )
+    ).scalar_one()
+
+    if incomplete_count:
+        raise RuntimeError(
+            f"Cannot downgrade: {incomplete_count} summary row(s) "
+            "have NULL full_summary or key_points. "
+            "Resolve these rows explicitly before retrying."
+        )
 
     op.drop_constraint(
         'uq_summaries_document',
