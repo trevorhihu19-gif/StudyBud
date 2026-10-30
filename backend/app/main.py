@@ -20,6 +20,9 @@ from app.routes.summaries import router as summaries_router
 from app.routes.quizzes import attempts_router, router as quizzes_router
 from app.routes.topics import router as topics_router
 from app.routes.flashcards import router as flashcards_router
+from app.routes.analytics import router as analytics_router
+from app.routes.study_session import router as study_sessions_router
+from app.routes.users import router as users_router
 from app.services.quota import QuotaExceeded
 from app.agents.llm import LLMUnavailable
 from app.core.tracing import configure_tracing
@@ -108,6 +111,9 @@ app.include_router(quizzes_router)
 app.include_router(attempts_router)
 app.include_router(topics_router)
 app.include_router(flashcards_router)
+app.include_router(analytics_router)
+app.include_router(study_sessions_router)
+app.include_router(users_router)
 
 @app.post("/quizzes/generate")
 async def generate_quiz(
